@@ -1,0 +1,5 @@
+alias ls list
+alias alias change
+help
+history
+pizza
