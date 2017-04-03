@@ -1,4 +1,11 @@
-﻿using System;
+/*
+ * Jamal D. Scott
+ * Personal Learning Project
+ * C# Shell implimentation
+ * Completed: 4/3/17
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,11 +17,17 @@ namespace Custom_Shell
 {
     class Program
     {
+        // list[] holds the name of all acceptable commands.
         private static String[] list = {"cd", "ls", "batch", "alias", "prompt", "quit", "help", "clear", "format", "history", "rma", "rpa", "fortune"};
+        //adjusted[] will hold any user given aliases.
         private static String[] adjusted = new String[1024];
+        //inputCommand[] will be the buffer for user input.
         private static String[] inputCommand = new String[1024];
+        //usrEntries[] will keep track of all commands entered by the user for the 'history command'.
         private static String[] usrEntries = new String[1024];
+        //fortune[] will hold x ammount of quotes from the fortune file.
         private static string[] fortune;
+        //prompt is the user entry display text.
         private static String prompt;
         private static int arrIndex = 0;
         private static int usrEntriesIndex = 0;
@@ -23,6 +36,7 @@ namespace Custom_Shell
 
         static void Main(string[] args)
         {
+            //loads the fortune into the array before user command execution.
             load_fortune();
 
             currentDirectory = Directory.GetCurrentDirectory();
@@ -47,6 +61,7 @@ namespace Custom_Shell
             }
         }
 
+        //Seperates the line of user input into commands, and phrases. [command][phrase1][phrase2][etc..]
         static void parseInput(String input)
         {
             String parsed = "";
@@ -57,6 +72,7 @@ namespace Custom_Shell
                 c = input[i];
                 parsed += c;
 
+                //Delimiters for words
                 if (c == ' ' || c == '\n' || c == '\r' || i == input.Length - 1)
                 {
                     parsed = parsed.Trim();
@@ -67,6 +83,7 @@ namespace Custom_Shell
             }
         }
 
+        //Determines which command to execute. This information is always parsed to inputCommand[0].
         static void readCommands()
         {
             if (string.IsNullOrEmpty(inputCommand[0]))
@@ -126,6 +143,7 @@ namespace Custom_Shell
                 case "":
                     break;
                 default:
+                    //Checks to see if we are being called from the alias method.
                     if (checkAlias() && aliasCall == true)
                     {
                         Console.WriteLine("Checking");
@@ -138,20 +156,24 @@ namespace Custom_Shell
             }
         }
 
+        //Command to read and display a document.
         static void lsh_rdoc()
         {
             String text;
-            text = System.IO.File.ReadAllText(@"U:\Private\Custom Shell\code.txt");
+            text = System.IO.File.ReadAllText(@"C:\Users\scottj\Documents\Visual Studio 2013\Projects\Custom Shell\code.txt");
             Console.WriteLine(text);
         }
 
+        //Command to read commands from a file.
         static void lsh_batch()
         {
             String location = inputCommand[1];
             string text = "";
+
+            //If a file is not specified, read from the default file.
             if (string.IsNullOrEmpty(inputCommand[1]))
             {
-                text = System.IO.File.ReadAllText(@"U:\Private\Custom Shell\batch_file.txt");
+                text = System.IO.File.ReadAllText(@"C:\Users\scottj\Documents\Visual Studio 2013\Projects\Custom Shell\batch_file.txt");
             }
             else
             {
@@ -159,7 +181,7 @@ namespace Custom_Shell
                 {
                     text = System.IO.File.ReadAllText(location);
                 }
-                catch (FileNotFoundException)
+                catch (FileNotFoundException e)
                 {
                     Console.WriteLine("Could not find batch file at the directory: " + location);
                     return;
@@ -167,6 +189,7 @@ namespace Custom_Shell
 
             }
 
+            //Adds a delimiter on the end of the string to know when to stop reading.
             text = text + "\n";
             char c;
             int index = 0;
@@ -175,6 +198,9 @@ namespace Custom_Shell
             for (int i = 0; i < text.Length; i++)
             {
                 c = text[i];
+
+                //Since the file only allows one command per line, a new line signals the end of a command.
+                //We store this command and execute it.
                 if (c == '\n' || c == '\r')
                 {
                     inputCommand[index] = phrase.Trim();
@@ -187,6 +213,7 @@ namespace Custom_Shell
                     phrase += c;
                     if (c == ' ')
                     {
+                        //Spaces mean there's multiple parts to a command, we store these parts into different parts of the buffer.
                         inputCommand[index] = phrase.Trim();
                         phrase = "";
                         index++;
@@ -195,25 +222,32 @@ namespace Custom_Shell
             }
         }
 
+        //Command to display random quotes!
         static void load_fortune()
         {
+            //Starts a new background thread to load the fortune while a user can execute commands.
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                string text = System.IO.File.ReadAllText(@"U:\Private\Custom Shell\fortunes");
+                string text = System.IO.File.ReadAllText(@"C:\Users\scottj\Documents\Visual Studio 2013\Projects\Custom Shell\fortunes");
                 int count = 0;
                 char c;
+                //Determines how many quotes there will be.
+                //quotes are separated by the '%' character.
                 for (int i = 0; i < text.Length; i++)
                 {
                     c = text[i];
                     if (c == '%') count++;
                 }
+                //Adds one onto the size for the last quote that isn't delimited by the '%' character.
                 count += 1;
 
+                //Sets the size of the array to hold the total number of quotes.
                 fortune = new string[count];
                 int fortuneIndex = 0;
                 String phrase = "";
 
+                //Adds the quote onto the array.
                 for (int i = 0; i < text.Length; i++)
                 {
                     c = text[i];
@@ -229,6 +263,7 @@ namespace Custom_Shell
             }).Start();
         }
 
+        //Picks a random spot in the array to print out a quote.
         static void lsh_fortune()
         {
             Random rnd = new Random();
@@ -236,19 +271,21 @@ namespace Custom_Shell
             Console.WriteLine(fortune[number]);
         }
 
+        //Command to display all commands and their aliases (if given.)
         static void lsh_la()
         {
             Console.WriteLine("\nPrinting out a list of all commands and their aliases:");
             for (int i = 0; i < list.Length; i++)
             {
                 if (string.IsNullOrWhiteSpace(adjusted[i]))
-                    Console.WriteLine("Command: " + list[i] + " Alias: *NONE*");
+                    Console.WriteLine("Command: " + list[i] + " Alias: ");
                 else
                     Console.WriteLine("Command: " + list[i] + " Alias: " + adjusted[i]);
             }
             Console.WriteLine("\n");
         }
 
+        //Command to remove an alias.
         static void lsh_rma()
         {
             if (string.IsNullOrEmpty(inputCommand[1]))
@@ -258,11 +295,12 @@ namespace Custom_Shell
             else
             {
                 adjusted[Array.IndexOf(adjusted, inputCommand[1])] = "";
-                Console.WriteLine("Alias: " + inputCommand[1] + " has been removed for the command: " + list[Array.IndexOf(list, inputCommand[0])]);
+                Console.WriteLine("Alias: " + inputCommand[1] + " has been removed.");
             }
 
         }
 
+        //Command to replace an alias.
         static void lsh_rpa()
         {
             if (string.IsNullOrEmpty(inputCommand[1]))
@@ -278,6 +316,7 @@ namespace Custom_Shell
 
         }
 
+        //Command to display all of the user entered commands.
         static void lsh_history()
         {
             Console.WriteLine("Printing out a list of the commands that you've typed: ");
@@ -294,6 +333,7 @@ namespace Custom_Shell
             Console.WriteLine("\n");
         }
 
+        //Command to clear up the console.
         static void lsh_clear()
         {
             for (int i = 0; i <= 100; i++)
@@ -302,6 +342,7 @@ namespace Custom_Shell
             }
         }
 
+        //Command that displays all of the available commands.
         static void lsh_help()
         {
             Console.WriteLine("\nHere is a list of all supported commands:");
@@ -312,6 +353,7 @@ namespace Custom_Shell
             Console.WriteLine("\n");
         }
 
+        //Command o change the current directory.
         static void lsh_changeDirectory()
         {
             currentDirectory = inputCommand[1];
@@ -321,7 +363,6 @@ namespace Custom_Shell
                 currentDirectory = Directory.GetCurrentDirectory();
                 return;
             }
-
             try
             {
                 Environment.CurrentDirectory = currentDirectory;
@@ -334,6 +375,7 @@ namespace Custom_Shell
             }
         }
 
+        //Command to list all of the files in the current directory.
         static void lsh_list()
         {
             String[] allfiles = System.IO.Directory.GetFiles(currentDirectory, "*", System.IO.SearchOption.TopDirectoryOnly);
@@ -344,17 +386,21 @@ namespace Custom_Shell
             }
         }
 
+        //Checks to see if the alias exists, if it does, associate the alias with its command based on array index
+        //Set the actual command into the command slot in the buffer, and then execute that command.
         static Boolean checkAlias()
         {
             int i = Array.IndexOf(adjusted, inputCommand[0]);
             if (i == -1)
                 return false;
 
+            //Sets the associated command into the command slot.
             inputCommand[0] = list[i].Trim();
             aliasCall = true;
             return true;
         }
 
+        //Command that sets an alias for a command/
         static void lsh_alias()
         {
             if (Array.IndexOf(adjusted, inputCommand[1]) != -1)
@@ -380,6 +426,7 @@ namespace Custom_Shell
             Console.WriteLine(inputCommand[1] + " has now been set to: " + adjusted[i]);
         }
 
+        //Command that changes the display prompt.
         static void lsh_prompt()
         {
             if (string.IsNullOrWhiteSpace(inputCommand[1]))
@@ -391,6 +438,7 @@ namespace Custom_Shell
                 prompt = inputCommand[1];
         }
 
+        //Command that explains command functionality and the format of the command (how to type it.)
         static void lsh_format()
         {
             Console.WriteLine("\nType a command to view the format of that command.");
@@ -475,6 +523,7 @@ namespace Custom_Shell
             Console.WriteLine("\n");
         }
 
+        //Command to exit the shell.
         static void lsh_quit()
         {
             Console.WriteLine("Quitting");
