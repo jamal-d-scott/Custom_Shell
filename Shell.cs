@@ -353,7 +353,7 @@ namespace Custom_Shell
             Console.WriteLine("\n");
         }
 
-        //Command o change the current directory.
+        //Command to change the current directory.
         static void lsh_changeDirectory()
         {
             currentDirectory = inputCommand[1];
