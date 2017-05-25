@@ -99,6 +99,9 @@ namespace Custom_Shell
                 case "ls":
                     lsh_list();
                     break;
+                case "run":
+                    lsh_run();
+                    break;
                 case "batch":
                     lsh_batch();
                     break;
@@ -154,6 +157,12 @@ namespace Custom_Shell
                         Console.WriteLine("\nCommand: '" + inputCommand[0] + "' is not supported or mapped.\n");
                     break;
             }
+        }
+
+        static void lsh_run()
+        {
+            String progam = Console.ReadLine();
+            System.Diagnostics.Process.Start(progam);
         }
 
         //Command to read and display a document.
@@ -313,7 +322,6 @@ namespace Custom_Shell
                 adjusted[Array.IndexOf(adjusted, inputCommand[1])] = inputCommand[2];
 
             }
-
         }
 
         //Command to display all of the user entered commands.
@@ -353,7 +361,7 @@ namespace Custom_Shell
             Console.WriteLine("\n");
         }
 
-        //Command to change the current directory.
+        //Command o change the current directory.
         static void lsh_changeDirectory()
         {
             currentDirectory = inputCommand[1];
